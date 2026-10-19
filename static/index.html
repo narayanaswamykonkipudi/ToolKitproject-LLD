@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Event Kit Relay System — User & Admin Portals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      </div>
+      <div>
+        <h1>College Event Kit Relay System</h1>
+        <p class="subtitle">Single Shared Kit · Dual Portals (Student & Admin)</p>
+      </div>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="module-switcher">
+      <button id="btn-user-mode" class="mode-btn active" onclick="switchModule('user')">
+        <span class="mode-icon">🎓</span>
+        <span class="mode-label">Student Portal <small>(Student User)</small></span>
+      </button>
+      <button id="btn-admin-mode" class="mode-btn" onclick="switchModule('admin')">
+        <span class="mode-icon">🛡️</span>
+        <span class="mode-label">Admin Dashboard <small>(College Desk)</small></span>
+      </button>
+    </div>
+
+    <div class="header-status">
+      <div id="kit-health-badge" class="badge badge-success">
+        <span class="status-dot"></span> Kit Complete & Usable
+      </div>
+    </div>
+  </header>
+
+  <!-- Global Alert Box -->
+  <div class="alert-container">
+    <div id="action-alert" class="alert-box alert-hidden">
+      <span id="alert-icon"></span>
+      <div id="alert-message"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- USER MODULE: STUDENT PORTAL                               -->
+  <!-- ========================================================= -->
+  <div id="user-module" class="module-container">
+    
+    <!-- Student Profile & Eligibility Bar -->
+    <section class="card profile-banner">
+      <div class="profile-meta">
+        <div class="team-select-box">
+          <label for="user-active-team">Active Student:</label>
+          <select id="user-active-team" onchange="onUserTeamChanged()">
+            <!-- Populated dynamically with registered students -->
+          </select>
+        </div>
+        <div class="standing-indicator">
+          <span class="standing-label">Student Standing:</span>
+          <div id="user-standing-badge" class="badge badge-success">GOOD STANDING</div>
+        </div>
+        <div class="debt-indicator">
+          <span class="debt-label">Unsettled Damage Fines:</span>
+          <span id="user-balance-amount" class="debt-val">₹0.00</span>
+        </div>
+      </div>
+      <div id="user-debarment-alert" class="debarment-notice alert-hidden" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <strong>⚠️ Booking Access Restricted:</strong> You have an unsettled damage penalty. You cannot book the kit until payment is cleared.
+        </div>
+        <button class="btn btn-warning btn-sm" onclick="switchUserTab('payments')">
+          💳 Settle Damage Fine Now
+        </button>
+      </div>
+    </section>
+
+    <!-- User Module Tabs -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchUserTab('book')">📅 1. Book Relay Kit</button>
+      <button class="tab-btn" onclick="switchUserTab('my-bookings')">📦 2. My Bookings (Take & Submit)</button>
+      <button class="tab-btn" onclick="switchUserTab('payments')">💳 3. Payments & Damage Claims</button>
+    </div>
+
+    <!-- TAB 1: Book Relay Kit -->
+    <div id="user-tab-book" class="tab-content active">
+      
+      <!-- Booking Mode Switcher: Time vs Days -->
+      <div class="booking-mode-toggle">
+        <button type="button" id="btn-mode-hours" class="mode-pill active" onclick="switchBookingMode('hours')">
+          <span>⏱️ Book by Time Slot (Hours)</span>
+        </button>
+        <button type="button" id="btn-mode-days" class="mode-pill" onclick="switchBookingMode('days')">
+          <span>📆 Book by Days (Multi-Day Relay)</span>
+        </button>
+      </div>
+
+      <div class="two-col-grid">
+        <!-- Left Column: Controls (Hours Grid OR Days Duration) -->
+        <section class="card">
+          <!-- Controls for Hours Mode -->
+          <div id="controls-hours-mode">
+            <div class="card-header">
+              <div>
+                <h2>Select Operating Hours (09:00 - 17:00)</h2>
+                <p class="section-desc">Pick an available slot. 15-minute post-event inspection gap is enforced automatically.</p>
+              </div>
+              <div class="date-selector">
+                <label for="user-booking-date">Date:</label>
+                <input type="date" id="user-booking-date" onchange="fetchUserSlots()">
+              </div>
+            </div>
+
+            <!-- Quick Duration Presets for Hours -->
+            <div style="margin-bottom: 0.85rem;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">QUICK DURATION PRESETS:</span>
+              <div class="preset-pills-row">
+                <button type="button" class="preset-pill" onclick="applyHourPreset(1)">1 Hour</button>
+                <button type="button" class="preset-pill" onclick="applyHourPreset(2)">2 Hours</button>
+                <button type="button" class="preset-pill" onclick="applyHourPreset(4)">4 Hours (Half Day)</button>
+                <button type="button" class="preset-pill" onclick="applyHourPreset(8)">Full Day (09:00 - 17:00)</button>
+              </div>
+            </div>
+
+            <div id="user-slots-grid" class="slots-grid">
+              <!-- Populated dynamically -->
+            </div>
+            <div class="slot-legend">
+              <span class="legend-item"><span class="legend-color slot-available"></span> Available</span>
+              <span class="legend-item"><span class="legend-color slot-reserved"></span> Reserved</span>
+              <span class="legend-item"><span class="legend-color slot-buffer"></span> 15m Buffer</span>
+              <span class="legend-item"><span class="legend-color slot-blocked"></span> Maintenance / Blocked</span>
+            </div>
+          </div>
+
+          <!-- Controls for Days Mode -->
+          <div id="controls-days-mode" style="display: none;">
+            <div class="card-header">
+              <div>
+                <h2>Select Number of Days</h2>
+                <p class="section-desc">Reserve the shared kit for multi-day events, productions, or festivals (up to 14 days).</p>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="days-start-date">Start / Handover Date:</label>
+              <input type="date" id="days-start-date" onchange="onDaysConfigChanged()">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="days-count-select">How many days do you want?</label>
+              <select id="days-count-select" onchange="onDaysConfigChanged()">
+                <option value="1">1 Day (Single Day Handover)</option>
+                <option value="2">2 Days (Overnight Event)</option>
+                <option value="3" selected>3 Days (Weekend / Multi-Day Fest)</option>
+                <option value="4">4 Days</option>
+                <option value="5">5 Days (Full Weekdays)</option>
+                <option value="7">7 Days (1 Full Week)</option>
+                <option value="10">10 Days</option>
+                <option value="14">14 Days (Maximum Permitted Horizon)</option>
+              </select>
+            </div>
+
+            <!-- Quick Duration Presets for Days -->
+            <div style="margin-bottom: 1rem;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">QUICK DAY PRESETS:</span>
+              <div class="preset-pills-row">
+                <button type="button" class="preset-pill" onclick="applyDayPreset(1)">1 Day</button>
+                <button type="button" class="preset-pill" onclick="applyDayPreset(2)">2 Days</button>
+                <button type="button" class="preset-pill active" onclick="applyDayPreset(3)">3 Days</button>
+                <button type="button" class="preset-pill" onclick="applyDayPreset(5)">5 Days</button>
+                <button type="button" class="preset-pill" onclick="applyDayPreset(7)">1 Week</button>
+                <button type="button" class="preset-pill" onclick="applyDayPreset(14)">2 Weeks</button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="days-handover-time">Start Time (Day 1)</label>
+                <input type="time" id="days-handover-time" value="09:00" onchange="onDaysConfigChanged()" required>
+              </div>
+              <div class="form-group">
+                <label for="days-return-time">Return Time (Final Day)</label>
+                <input type="time" id="days-return-time" value="17:00" onchange="onDaysConfigChanged()" required>
+              </div>
+            </div>
+
+            <div class="notice-info" style="margin-top: 1rem;">
+              <strong>ℹ️ Campus Policy:</strong> Start and return times must be within operational desk hours (09:00 - 17:00). A mandatory 15-minute gap is scheduled on both ends for physical item inspection.
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Reservation Confirmation & Live Status -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Confirm Slot Reservation</h2>
+              <p class="section-desc">Reservations are validated against student eligibility and kit condition.</p>
+            </div>
+          </div>
+
+          <form id="user-booking-form" class="standard-form">
+            <div class="form-group">
+              <label>Selected Student</label>
+              <input type="text" id="user-form-team-name" readonly>
+            </div>
+
+            <!-- Time Inputs (Active when in Hours Mode) -->
+            <div id="form-hours-time-row" class="form-row">
+              <div class="form-group">
+                <label for="user-start-time">Start Time</label>
+                <input type="time" id="user-start-time" value="09:00" onchange="onHoursInputsChanged()" required>
+              </div>
+              <div class="form-group">
+                <label for="user-end-time">End Time</label>
+                <input type="time" id="user-end-time" value="10:00" onchange="onHoursInputsChanged()" required>
+              </div>
+            </div>
+
+            <!-- Live Summary Preview Box -->
+            <div class="booking-summary-preview">
+              <div class="summary-preview-title">
+                <span>Relay Slot Summary</span>
+                <span id="preview-mode-tag" class="badge badge-success">HOURS MODE</span>
+              </div>
+              <div class="summary-preview-row">
+                <span>Handover / Start:</span>
+                <strong id="preview-start-time">Today, 09:00 AM</strong>
+              </div>
+              <div class="summary-preview-row">
+                <span>Return / End:</span>
+                <strong id="preview-end-time">Today, 10:00 AM</strong>
+              </div>
+              <div class="summary-preview-row">
+                <span>Total Duration:</span>
+                <strong id="preview-duration">1 Hour</strong>
+              </div>
+              <div class="summary-preview-row">
+                <span>Single Shared Kit:</span>
+                <strong id="preview-kit-name">Campus Primary Relay Kit #1</strong>
+              </div>
+
+              <!-- Live Availability Check Banner -->
+              <div id="preview-availability-box" class="availability-status-box avail-free">
+                <span id="preview-avail-icon">✅</span>
+                <span id="preview-avail-text">Slot is physically available for reservation.</span>
+              </div>
+            </div>
+
+            <div id="debarred-block-message" class="alert-box alert-danger alert-hidden" style="margin-top: 1rem;">
+              <strong>🚫 Booking Blocked:</strong> Your team has an unsettled damage penalty. You cannot book until payment is cleared in the <em>Payments & Damage Claims</em> portal.
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btn-user-submit-booking" style="margin-top: 1rem;">
+              Confirm Reservation Request
+            </button>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 2: My Bookings (Take & Submit) -->
+    <div id="user-tab-my-bookings" class="tab-content">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>My Active Reservations & Relay Actions</h2>
+            <p class="section-desc">Take (collect) the physical kit for your event, and Submit (return) it when finished.</p>
+          </div>
+        </div>
+
+        <div id="user-my-reservations-list" class="my-reservations-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 3: Payments & Claims -->
+    <div id="user-tab-payments" class="tab-content">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Damage Invoices & Settlement Portal</h2>
+            <p class="section-desc">Itemized liability breakdown (base repair + 15% college handling surcharge). Settle online to restore booking eligibility.</p>
+          </div>
+        </div>
+
+        <div class="billing-view-grid">
+          <div class="billing-summary-panel">
+            <div class="balance-card">
+              <div class="balance-meta">
+                <span>Total Outstanding Liability</span>
+                <h1 id="user-billing-total">₹0.00</h1>
+              </div>
+              <div id="user-billing-standing-pill" class="badge badge-success">ELIGIBLE</div>
+            </div>
+            <div class="payment-policy-note">
+              <strong>College Policy BR-06 to BR-08:</strong><br>
+              Damage claims must be settled before due date. Overdue unpaid invoices block future bookings until payment verification clears the debt.
+            </div>
+          </div>
+
+          <div class="invoices-display-panel">
+            <h3>Itemized Invoices for Student</h3>
+            <div id="user-invoices-list" class="invoices-list">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <h3 style="margin-top: 1.5rem;">Settlement Receipts</h3>
+            <div id="user-payments-list" class="payments-list">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- ADMIN MODULE: COLLEGE ORGANIZER DASHBOARD                -->
+  <!-- ========================================================= -->
+  <div id="admin-module" class="module-container module-hidden">
+    
+    <!-- Top Section: Active Handover & Defect Inspection Station -->
+    <section class="admin-station-card">
+      <div class="admin-station-header">
+        <div>
+          <h2>🛡️ Active Relay Handover & Defect Inspection Station</h2>
+          <p class="section-desc">Manage physical equipment handover ("Give Kit"), receive returns, and assess component damage penalties in INR (₹).</p>
+        </div>
+        <div class="badge badge-warning" id="admin-station-active-count">
+          <span>0 Active Operations</span>
+        </div>
+      </div>
+
+      <div class="station-columns">
+        <!-- 1. Ready for Handover (Give Kit) -->
+        <div class="station-col">
+          <div class="station-col-header">
+            <h3>📥 1. Ready for Handover</h3>
+            <span class="badge badge-success" id="count-handover-ready">0</span>
+          </div>
+          <div id="admin-handover-list" class="station-items-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- 2. Currently With Student (In-Use) -->
+        <div class="station-col">
+          <div class="station-col-header">
+            <h3>📦 2. Currently In-Use</h3>
+            <span class="badge badge-warning" id="count-inuse">0</span>
+          </div>
+          <div id="admin-inuse-list" class="station-items-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- 3. Submitted / Pending Admin Defect Inspection -->
+        <div class="station-col">
+          <div class="station-col-header">
+            <h3>⚖️ 3. Pending Defect Inspection</h3>
+            <span class="badge badge-danger" id="count-pending-inspection">0</span>
+          </div>
+          <div id="admin-pending-inspection-list" class="station-items-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-grid">
+      
+      <!-- Left Column: Single Kit Usability & Buffer Pool -->
+      <section class="card admin-col">
+        <div class="card-header">
+          <div>
+            <h2>Physical Event Kit Inventory</h2>
+            <p class="section-desc">Single bundle shared across campus clubs</p>
+          </div>
+        </div>
+
+        <div class="kit-components" id="admin-kit-components">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card-header sub-header">
+          <div>
+            <h3>College Buffer Stock (Spare Pool)</h3>
+            <p class="section-desc">College immediately replaces damaged components to keep kit usable</p>
+          </div>
+        </div>
+        <div class="buffer-components" id="admin-buffer-components">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="replacement-trail">
+          <h4>College Replacement & Swap Log</h4>
+          <div id="admin-replacement-logs" class="log-stream">
+            <div class="empty-log">No replacements logged yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center Column: Master Schedule & Maintenance Blocks -->
+      <section class="card admin-col">
+        <div class="card-header">
+          <div>
+            <h2>Master Relay Schedule & Maintenance</h2>
+            <p class="section-desc">Manage operational blocks & campus reservations</p>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openMaintenanceModal()">
+            + Schedule Maintenance Block
+          </button>
+        </div>
+
+        <!-- Master Calendar Timeline -->
+        <div class="admin-calendar-box">
+          <h3>Today's Master Timeline (Reservations & Buffers)</h3>
+          <div id="admin-calendar-timeline" class="timeline-stream">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Active Maintenance Blocks -->
+        <div class="admin-blocks-box">
+          <h3>Active Maintenance & Calibration Blocks</h3>
+          <div id="admin-blocks-list" class="blocks-stream">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Student Directory & Penalty Ledger -->
+      <section class="card admin-col">
+        <div class="card-header">
+          <div>
+            <h2>Student Directory & Penalty Ledger</h2>
+            <p class="section-desc">Audit past-due damage claims & manage student debarment</p>
+          </div>
+          <button class="btn btn-warning btn-sm" onclick="triggerAdminOverdueAudit()">
+            ⚡ Run Due-Date Audit
+          </button>
+        </div>
+
+        <div id="admin-clubs-list" class="clubs-list">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODALS                                                    -->
+  <!-- ========================================================= -->
+
+  <!-- Return Equipment Inspection Modal -->
+  <div id="return-modal" class="modal-backdrop modal-hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2>Official Handover Return & Defect Inspection</h2>
+          <p class="subtitle">Admin diagnoses item condition and assesses damage liability in INR (₹)</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('return-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="return-inspection-form">
+          <input type="hidden" id="return-res-id">
+          
+          <div id="inspection-target-banner" style="background: rgba(255,255,255,0.04); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <strong id="inspect-student-name">Target Student: Loading...</strong>
+            <span id="inspect-res-tag" class="badge badge-warning">CHECKED_OUT</span>
+          </div>
+
+          <div class="inspection-item">
+            <div class="item-meta">
+              <strong>Camera</strong>
+              <span>Optical unit, lens & sensor</span>
+            </div>
+            <select id="inspect-camera" onchange="calculateInspectionPenaltyPreview()">
+              <option value="GOOD" selected>GOOD (Usable, Intact — ₹0.00)</option>
+              <option value="DAMAGED">DAMAGED (Lens Calibration & Repair — ₹2,500 + 15% Surcharge)</option>
+              <option value="MISSING">MISSING (Full Unit Loss — ₹38,000 + 15% Surcharge)</option>
+            </select>
+          </div>
+
+          <div class="inspection-item">
+            <div class="item-meta">
+              <strong>Microphone</strong>
+              <span>Wireless capsule, diaphragm & receiver</span>
+            </div>
+            <select id="inspect-microphone" onchange="calculateInspectionPenaltyPreview()">
+              <option value="GOOD" selected>GOOD (Usable, Intact — ₹0.00)</option>
+              <option value="DAMAGED">DAMAGED (Diaphragm Repair — ₹700 + 15% Surcharge)</option>
+              <option value="MISSING">MISSING (Full Unit Loss — ₹6,500 + 15% Surcharge)</option>
+            </select>
+          </div>
+
+          <div class="inspection-item">
+            <div class="item-meta">
+              <strong>Tripod</strong>
+              <span>Leg clamp lock & fluid head</span>
+            </div>
+            <select id="inspect-tripod" onchange="calculateInspectionPenaltyPreview()">
+              <option value="GOOD" selected>GOOD (Usable, Intact — ₹0.00)</option>
+              <option value="DAMAGED">DAMAGED (Leg Lock Repair — ₹450 + 15% Surcharge)</option>
+              <option value="MISSING">MISSING (Full Unit Loss — ₹3,200 + 15% Surcharge)</option>
+            </select>
+          </div>
+
+          <!-- Live Penalty Breakdown Estimate Card -->
+          <div class="penalty-estimate-card">
+            <div class="penalty-estimate-header">
+              <h4>Itemized Defect Liability Assessment (INR / ₹)</h4>
+              <span id="penalty-verdict-badge" class="badge badge-success">ZERO DEFECT</span>
+            </div>
+            <div class="penalty-row">
+              <span>Base Assessment Fee:</span>
+              <strong id="penalty-base-cost">₹0.00</strong>
+            </div>
+            <div class="penalty-row">
+              <span>College Handling Surcharge (15%):</span>
+              <strong id="penalty-handling-fee">₹0.00</strong>
+            </div>
+            <div class="penalty-total-row">
+              <span>Total Fine Due:</span>
+              <span id="penalty-total-due">₹0.00</span>
+            </div>
+            <div id="penalty-debarment-warning" style="font-size: 0.75rem; color: #fb7185; display: none;">
+              ⚠️ Warning: Imposing this penalty will IMMEDIATELY DEBAR the student team from further kit reservations until settled in full.
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="return-notes">Organizer Defect & Inspection Notes</label>
+            <input type="text" id="return-notes" placeholder="e.g. All equipment inspected and intact" value="All items returned in good condition.">
+          </div>
+
+          <div class="form-group" id="waiver-reason-group" style="display: none; margin-top: 0.5rem;">
+            <label for="return-waiver-reason">Administrative Exemption / Waiver Reason</label>
+            <input type="text" id="return-waiver-reason" placeholder="e.g. Approved campus departmental activity exception">
+          </div>
+
+          <!-- Inspection Action Buttons -->
+          <div class="modal-action-buttons">
+            <button type="button" class="btn btn-danger" id="btn-impose-penalty" onclick="submitInspectionDecision(true, false)">
+              ⚠️ Impose Penalty & Debar Student
+            </button>
+            <button type="button" class="btn btn-success" id="btn-clean-return" onclick="submitInspectionDecision(false, true)">
+              ✅ Clean Return (No Penalty)
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-waive-penalty" onclick="toggleWaiverInput()">
+              🤝 Admin Waive Penalty
+            </button>
+          </div>
+          <div id="waiver-submit-container" style="display: none; margin-top: 0.75rem;">
+            <button type="button" class="btn btn-warning" style="width: 100%;" onclick="submitInspectionDecision(false, false, true)">
+              Confirm Waived Return (Zero Fee)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Maintenance Block Modal -->
+  <div id="maint-modal" class="modal-backdrop modal-hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2>Schedule Kit Maintenance Block</h2>
+          <p class="subtitle">Blocks kit availability for calibration, repair or inspection</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('maint-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="maint-form">
+          <div class="form-group">
+            <label for="maint-date">Maintenance Date</label>
+            <input type="date" id="maint-date" required>
+          </div>
+          <div class="form-group">
+            <label for="maint-reason">Maintenance Reason</label>
+            <input type="text" id="maint-reason" value="Annual Sensor Calibration & Lens Cleaning" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="maint-start-time">Start Time</label>
+              <input type="time" id="maint-start-time" value="13:00" required>
+            </div>
+            <div class="form-group">
+              <label for="maint-end-time">End Time</label>
+              <input type="time" id="maint-end-time" value="14:00" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            Create Maintenance Block
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reschedule Modal -->
+  <div id="reschedule-modal" class="modal-backdrop modal-hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2>Reschedule Reservation Slot</h2>
+          <p class="subtitle">Select a new conflict-free slot for this booking</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('reschedule-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="reschedule-form">
+          <input type="hidden" id="reschedule-res-id">
+          <div class="form-group">
+            <label for="reschedule-date">Reschedule Date</label>
+            <input type="date" id="reschedule-date" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reschedule-start-time">New Start Time</label>
+              <input type="time" id="reschedule-start-time" value="14:15" required>
+            </div>
+            <div class="form-group">
+              <label for="reschedule-end-time">New End Time</label>
+              <input type="time" id="reschedule-end-time" value="15:15" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            Confirm Reschedule
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
