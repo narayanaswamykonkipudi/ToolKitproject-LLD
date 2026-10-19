@@ -14,7 +14,7 @@ from api.routes import get_router
 
 app = FastAPI(title="College Event Kit Relay System - Student & Admin Implementation", version="2.0.0")
 
-# Initialize Architecture Components
+# Initialize Architecture Components.
 repo = MemoryRepository()
 replacement_service = KitReplacementService(repo)
 billing_service = PenaltyBillingService(repo)
@@ -113,13 +113,14 @@ def seed_database():
 
 seed_database()
 
-# Mount API Router
+# Mount API Router.
 app.include_router(get_router(repo, replacement_service, billing_service, reservation_service, availability_service))
 
 # Mount Static Files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+
 
 if __name__ == "__main__":
     import uvicorn
