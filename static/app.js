@@ -5,7 +5,7 @@ let currentSlots = [];
 let activeModule = "user"; // 'user' (Student) or 'admin' (College Desk)
 let activeUserTab = "book"; // 'book', 'my-bookings', 'payments'
 let bookingMode = "hours"; // 'hours' or 'days'
-let selectedStudentId = null;
+let selectedStudentId =null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Set default booking date to today
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ==========================================
-// DATA FETCHING & STATE MANAGEMENT
+// DATA FETCHING & STATE MANAGEMENTS
 // ==========================================
 async function fetchState() {
   try {
