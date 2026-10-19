@@ -10,7 +10,7 @@ An executable Low-Level Design (LLD) implementation for the **College Event Kit 
 5. **Financial Standing & Booking Debarment**: Clubs with overdue or unsettled damage claims are automatically placed in `DEBARRED` standing, restricting further kit reservations (HTTP 403) via the **Chain of Responsibility** validation pipeline.
 6. **Transparent Payment Portal & Real-Time Standing Restoration**: Supports online payment settlement in INR (₹). Once all dues are cleared, club booking privileges are instantly restored.
 
----
+----
 
 ## 1. Indian Rupee (INR / ₹) Standardized Rate Card
 
@@ -20,7 +20,7 @@ An executable Low-Level Design (LLD) implementation for the **College Event Kit 
 | **Microphone** | `MICROPHONE` | ₹700.00 | ₹6,500.00 | 15% (min ₹100) |
 | **Tripod** | `TRIPOD` | ₹450.00 | ₹3,200.00 | 15% (min ₹100) |
 
----
+----
 
 ## 2. Architecture & Directory Structure
 
